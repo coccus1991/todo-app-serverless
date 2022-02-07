@@ -1,5 +1,5 @@
 const AWS = require("aws-sdk");
-const TASK_TABLE = "todo-app";
+const TASK_TABLE = "src";
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const {v4: uuidv4} = require('uuid');
 const serverless = require('serverless-http');
