@@ -1,9 +1,10 @@
 const AWS = require("aws-sdk");
-const TASK_TABLE = "src";
 const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const {v4: uuidv4} = require('uuid');
 const serverless = require('serverless-http');
 const express = require("express");
+
+const TASK_TABLE = process.env.TASK_TABLE;
 
 const app = express();
 
@@ -43,11 +44,17 @@ app.post("/task", async (req, res) => {
 });
 
 app.delete("/task/:id", async (req, res) => {
-    await dynamoDb.delete({
-        TableName: TASK_TABLE, Key: {
-            id: req.params.id
-        }
-    }).promise();
+    try {
+        await dynamoDb.delete({
+            TableName: TASK_TABLE, Key: {
+                id: req.params.id
+            }
+        }).promise();
+    } catch (e) {
+        console.log("Exception", e.message)
+        res.status(500).send(e.message)
+
+    }
 
     res.send("");
 });
