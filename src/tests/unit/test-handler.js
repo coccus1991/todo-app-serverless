@@ -60,6 +60,7 @@ describe('Tests task endpoint crud', function () {
         expect(data).include(task)
             .and.have.property("id").that.is.a("string")
         // .and.have.property("created_at").that.a("number")
+
         task = data;
     });
 

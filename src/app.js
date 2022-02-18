@@ -16,12 +16,14 @@ if (process.env.DYNAMODB_CLIENT_REGION)
 const dynamoDb = new AWS.DynamoDB.DocumentClient(dynamoDBConf);
 
 const app = express();
+const taskRouter = express.Router();
 
 app.use(express.json());
 
+
 const getUnixTime = () => ((Date.now() / 1000) | 0)
 
-app.get("/task", async (req, res) => {
+taskRouter.get("/task", async (req, res) => {
     const tasks = await dynamoDb.scan({
         TableName: TASK_TABLE
     }).promise();
@@ -29,7 +31,7 @@ app.get("/task", async (req, res) => {
     res.json(tasks.Items);
 });
 
-app.put("/task", async (req, res) => {
+taskRouter.put("/task", async (req, res) => {
     const task = req.body;
 
     await dynamoDb.put({TableName: TASK_TABLE, Item: task}).promise();
@@ -37,7 +39,7 @@ app.put("/task", async (req, res) => {
     return res.json(task);
 });
 
-app.post("/task", async (req, res) => {
+taskRouter.post("/task", async (req, res) => {
     let task = {
         ...req.body,
         id: uuidv4(),
@@ -49,7 +51,7 @@ app.post("/task", async (req, res) => {
     res.json(task);
 });
 
-app.delete("/task/:id", async (req, res) => {
+taskRouter.delete("/task/:id", async (req, res) => {
     await dynamoDb.delete({
         TableName: TASK_TABLE, Key: {
             id: req.params.id
@@ -58,6 +60,8 @@ app.delete("/task/:id", async (req, res) => {
 
     res.status(200).send();
 });
+
+app.use(process.env.BASE_PATH || "/", taskRouter)
 
 
 module.exports.lambdaHandler = serverless(app);
