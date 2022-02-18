@@ -1,19 +1,25 @@
 const AWS = require("aws-sdk");
-const dynamoDb = new AWS.DynamoDB.DocumentClient();
 const {v4: uuidv4} = require('uuid');
 const serverless = require('serverless-http');
 const express = require("express");
 
 const TASK_TABLE = process.env.TASK_TABLE;
 
+let dynamoDBConf = {};
+
+if (process.env.DYNAMODB_CLIENT_ENDPOINT)
+    dynamoDBConf.endpoint = process.env.DYNAMODB_CLIENT_ENDPOINT;
+
+if (process.env.DYNAMODB_CLIENT_REGION)
+    dynamoDBConf.region = process.env.DYNAMODB_CLIENT_REGION
+
+const dynamoDb = new AWS.DynamoDB.DocumentClient(dynamoDBConf);
+
 const app = express();
 
 app.use(express.json());
 
-function getUnixTime() {
-    return (Date.now() / 1000) | 0;
-}
-
+const getUnixTime = () => ((Date.now() / 1000) | 0)
 
 app.get("/task", async (req, res) => {
     const tasks = await dynamoDb.scan({
@@ -35,7 +41,7 @@ app.post("/task", async (req, res) => {
     let task = {
         ...req.body,
         id: uuidv4(),
-        created_date: getUnixTime(),
+        created_date: getUnixTime()
     };
 
     await dynamoDb.put({TableName: TASK_TABLE, Item: task}).promise();
@@ -44,19 +50,13 @@ app.post("/task", async (req, res) => {
 });
 
 app.delete("/task/:id", async (req, res) => {
-    try {
-        await dynamoDb.delete({
-            TableName: TASK_TABLE, Key: {
-                id: req.params.id
-            }
-        }).promise();
-    } catch (e) {
-        console.log("Exception", e.message)
-        res.status(500).send(e.message)
+    await dynamoDb.delete({
+        TableName: TASK_TABLE, Key: {
+            id: req.params.id
+        }
+    }).promise();
 
-    }
-
-    res.send("");
+    res.status(200).send();
 });
 
 
